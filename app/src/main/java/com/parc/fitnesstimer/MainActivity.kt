@@ -3,9 +3,6 @@ package com.parc.fitnesstimer
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.ui.Modifier
-import com.parc.fitnesstimer.ui.theme.BackgroundDeep
 import com.parc.fitnesstimer.ui.theme.ParcFitnessTimerTheme
 import dagger.hilt.android.AndroidEntryPoint
 

@@ -18,7 +18,7 @@ import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -119,7 +119,7 @@ fun ConnectionScreen(
             }
 
             // ── Manual IP fallback ─────────────────────────────────────────────
-            Divider(color = BorderSubtle)
+            HorizontalDivider(color = BorderSubtle)
 
             Text("Or enter IP address manually", color = TextSecondary, fontSize = 12.sp)
 

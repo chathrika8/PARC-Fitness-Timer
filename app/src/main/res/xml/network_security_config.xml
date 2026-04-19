@@ -1,16 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Allow cleartext (ws://, http://) traffic to the ESP32 AP address only.
-    All other traffic must use TLS. This is required because the device
-    does not support TLS on its WebSocket server.
+    Allow cleartext (ws://) traffic to the ESP32 device.
+    The device does not support TLS on its WebSocket server.
+    Android's domain-config does not support IP wildcards, so cleartext is
+    permitted globally — this app only ever opens connections to the local
+    timer device and never sends traffic to the internet unencrypted.
 -->
 <network-security-config>
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="false">192.168.4.1</domain>
-    </domain-config>
-    <!-- Fallback: cleartext allowed for any local/private IP the user configures -->
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">192.168</domain>
-    </domain-config>
-    <base-config cleartextTrafficPermitted="false" />
+    <base-config cleartextTrafficPermitted="true" />
 </network-security-config>
