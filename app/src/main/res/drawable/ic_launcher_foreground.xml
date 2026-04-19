@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Adaptive icon foreground — 108 × 108 dp canvas.
+  Safe zone: 72 × 72 dp centred at (54, 54) — keep key strokes inside.
+
+  Design: industrial stopwatch
+    • Crown / side-button: dark anthracite rounded rect
+    • Body ring: dark charcoal circle with hairline border
+    • Arc track (90°, gap region): very dark so ghost-segments are felt
+    • Progress arc (270° clockwise, 12 → 3 → 6 → 9 o'clock): AccentRed
+    • Cardinal tick marks at 3, 6, 9 (subtle); 12 implied by arc terminus
+    • Clock hand: thin AccentRed rect from pivot to ~2/3 radius
+    • Centre pivot dot: AccentRed solid circle
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- ── Crown / case button ───────────────────────────────────────────────── -->
+    <!-- rx/ry approximated with line segments at corners for API compat -->
+    <path
+        android:pathData="
+            M49,26 Q49,23 52,23 L56,23 Q59,23 59,26
+            L59,34 L49,34 Z"
+        android:fillColor="#303030" />
+
+    <!-- ── Stopwatch body (filled circle + hairline ring) ───────────────────── -->
+    <!-- Centre (54,62), radius 27. Full-circle: split into two 180° arcs. -->
+    <path
+        android:pathData="
+            M54,35 A27,27 0 1,1 54,89
+            A27,27 0 1,1 54,35 Z"
+        android:fillColor="#111111"
+        android:strokeColor="#272727"
+        android:strokeWidth="1.5" />
+
+    <!-- ── Arc track — 90° gap from 9 o'clock back to 12 o'clock ────────────── -->
+    <!-- This dim arc shows the "empty" portion of the countdown ring.          -->
+    <!-- Centre (54,62), arc radius 22. 9 o'clock=(32,62), 12 o'clock=(54,40). -->
+    <path
+        android:pathData="M32,62 A22,22 0 0,1 54,40"
+        android:fillColor="#00000000"
+        android:strokeColor="#252525"
+        android:strokeWidth="4"
+        android:strokeLineCap="round" />
+
+    <!-- ── Progress arc — 270° clockwise from 12 o'clock to 9 o'clock ────────── -->
+    <!-- Large-arc-flag=1, sweep-flag=1 (clockwise).                            -->
+    <!-- Start: 12 o'clock (54,40). End: 9 o'clock (32,62).                    -->
+    <path
+        android:pathData="M54,40 A22,22 0 1,1 32,62"
+        android:fillColor="#00000000"
+        android:strokeColor="#E53935"
+        android:strokeWidth="4"
+        android:strokeLineCap="round" />
+
+    <!-- ── Cardinal tick marks at 3, 6, 9 (very subtle) ───────────────────── -->
+    <!-- 3 o'clock: right edge, centre y=62 -->
+    <path
+        android:pathData="M76,60.5 L80,60.5 L80,63.5 L76,63.5 Z"
+        android:fillColor="#303030" />
+    <!-- 6 o'clock: bottom, centre x=54 -->
+    <path
+        android:pathData="M52.5,80 L55.5,80 L55.5,84 L52.5,84 Z"
+        android:fillColor="#303030" />
+    <!-- 9 o'clock: left edge, centre y=62 -->
+    <path
+        android:pathData="M28,60.5 L32,60.5 L32,63.5 L28,63.5 Z"
+        android:fillColor="#303030" />
+
+    <!-- ── Clock hand — from pivot upward, AccentRed ────────────────────────── -->
+    <!-- Thin 2.5 × 18 dp rect, bottom at centre (54,62), top at y=44 -->
+    <path
+        android:pathData="M52.75,44 L55.25,44 L55.25,62 L52.75,62 Z"
+        android:fillColor="#E53935" />
+
+    <!-- ── Centre pivot dot ─────────────────────────────────────────────────── -->
+    <!-- Circle r=3.5 centred at (54,62). Two 180° arcs. -->
+    <path
+        android:pathData="
+            M54,58.5 A3.5,3.5 0 1,1 54,65.5
+            A3.5,3.5 0 1,1 54,58.5 Z"
+        android:fillColor="#E53935" />
+
+</vector>

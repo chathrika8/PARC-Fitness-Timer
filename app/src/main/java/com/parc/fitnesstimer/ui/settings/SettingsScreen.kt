@@ -325,7 +325,7 @@ private fun SectionTitle(title: String) {
 private fun SettingCard(content: @Composable () -> Unit) {
     Surface(
         color  = SurfaceCard,
-        shape  = RoundedCornerShape(12.dp),
+        shape  = RoundedCornerShape(3.dp),
         border = BorderStroke(1.dp, BorderSubtle),
         modifier = Modifier
             .fillMaxWidth()
@@ -381,7 +381,7 @@ private fun DigitReorderPanel(
 
             Surface(
                 color  = if (isDragging) AccentRed.copy(alpha = 0.15f) else SurfaceElevated,
-                shape  = RoundedCornerShape(8.dp),
+                shape  = RoundedCornerShape(3.dp),
                 border = BorderStroke(1.dp, if (isDragging) AccentRed else BorderSubtle),
                 modifier = Modifier
                     .fillMaxWidth()

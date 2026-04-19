@@ -1,7 +1,5 @@
 package com.parc.fitnesstimer.ui.timer
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -33,7 +31,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -117,7 +114,7 @@ fun TimerScreen(
         if (connState == ConnectionState.DISCONNECTED) {
             Surface(
                 color = SurfaceCard,
-                shape = RoundedCornerShape(8.dp),
+                shape = RoundedCornerShape(3.dp),
                 border = BorderStroke(1.dp, AccentRed.copy(alpha = 0.3f)),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -242,7 +239,7 @@ fun TimerScreen(
             Button(
                 onClick  = viewModel::onStartPause,
                 modifier = Modifier.fillMaxWidth().height(56.dp),
-                shape    = RoundedCornerShape(12.dp),
+                shape    = RoundedCornerShape(3.dp),
                 colors   = ButtonDefaults.buttonColors(containerColor = startColor)
             ) {
                 Text(startLabel, fontSize = 18.sp, fontWeight = FontWeight.Bold,
@@ -255,14 +252,14 @@ fun TimerScreen(
                     modifier = Modifier.weight(1f).height(48.dp),
                     colors   = ButtonDefaults.outlinedButtonColors(contentColor = TextSecondary),
                     border   = BorderStroke(1.dp, BorderSubtle),
-                    shape    = RoundedCornerShape(10.dp)
+                    shape    = RoundedCornerShape(3.dp)
                 ) { Text("RESET", fontSize = 14.sp, letterSpacing = 1.sp) }
 
                 if (ui.showRoundButton) {
                     Button(
                         onClick  = viewModel::onRoundInc,
                         modifier = Modifier.weight(1f).height(48.dp),
-                        shape    = RoundedCornerShape(10.dp),
+                        shape    = RoundedCornerShape(3.dp),
                         colors   = ButtonDefaults.buttonColors(containerColor = AccentBlue)
                     ) { Text("ROUND +1", fontSize = 13.sp, fontWeight = FontWeight.Bold) }
                 }

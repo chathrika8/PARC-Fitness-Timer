@@ -97,14 +97,15 @@ fun ParcNavHost() {
                                 )
                             },
                             label = {
-                                Text(item.label, fontSize = 10.sp, fontWeight = FontWeight.Medium)
+                                Text(item.label, fontSize = 10.sp, fontWeight = FontWeight.Bold,
+                                    letterSpacing = 1.sp)
                             },
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor   = AccentRed,
                                 selectedTextColor   = AccentRed,
                                 unselectedIconColor = TextSecondary,
                                 unselectedTextColor = TextSecondary,
-                                indicatorColor      = AccentRed.copy(alpha = 0.12f)
+                                indicatorColor      = AccentRed.copy(alpha = 0.18f)
                             )
                         )
                     }

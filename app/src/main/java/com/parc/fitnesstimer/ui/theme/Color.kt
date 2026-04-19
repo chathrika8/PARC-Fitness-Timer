@@ -13,7 +13,7 @@ val DisplayRed = Color(0xFFE53935)
 val BackgroundDeep   = Color(0xFF090909)   // Base layer
 val SurfaceCard      = Color(0xFF111111)   // Card / panel
 val SurfaceElevated  = Color(0xFF181818)   // Slightly raised surfaces
-val BorderSubtle     = Color(0xFF1E1E1E)   // Dividers and outlines
+val BorderSubtle     = Color(0xFF262626)   // Dividers and outlines
 
 // ── Text ──────────────────────────────────────────────────────────────────────
 val TextPrimary   = Color(0xFFE4E4E4)
@@ -37,6 +37,6 @@ val Md3Surface        = SurfaceCard
 val Md3OnSurface      = TextPrimary
 val Md3SurfaceVariant = SurfaceElevated
 val Md3OnSurfaceVar   = TextSecondary
-val Md3Outline        = BorderSubtle
+val Md3Outline        = Color(0xFF2E2E2E)
 val Md3Error          = Color(0xFFCF6679)
 val Md3OnError        = Color(0xFF000000)
