@@ -63,7 +63,7 @@ private fun ModeChip(
 
     Surface(
         onClick      = onClick,
-        shape        = RoundedCornerShape(50),
+        shape        = RoundedCornerShape(3.dp),
         color        = bgColor,
         border       = BorderStroke(1.dp, borderColor)
     ) {

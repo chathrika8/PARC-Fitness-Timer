@@ -92,7 +92,7 @@ fun ConnectionScreen(
                     onClick  = viewModel::onConnectWifiTapped,
                     enabled  = !isLoading,
                     modifier = Modifier.fillMaxWidth().height(52.dp),
-                    shape    = RoundedCornerShape(12.dp),
+                    shape    = RoundedCornerShape(3.dp),
                     colors   = ButtonDefaults.buttonColors(containerColor = AccentRed)
                 ) {
                     if (isLoading) {
@@ -144,7 +144,7 @@ fun ConnectionScreen(
                 onClick  = viewModel::onConnectIpTapped,
                 enabled  = !isLoading,
                 modifier = Modifier.fillMaxWidth().height(48.dp),
-                shape    = RoundedCornerShape(12.dp),
+                shape    = RoundedCornerShape(3.dp),
                 border   = BorderStroke(1.dp, AccentRed),
                 colors   = ButtonDefaults.outlinedButtonColors(contentColor = AccentRed)
             ) {

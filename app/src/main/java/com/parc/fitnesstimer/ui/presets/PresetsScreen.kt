@@ -140,7 +140,7 @@ private fun PresetCard(
 ) {
     Surface(
         color  = SurfaceCard,
-        shape  = RoundedCornerShape(10.dp),
+        shape  = RoundedCornerShape(3.dp),
         border = BorderStroke(1.dp, BorderSubtle)
     ) {
         Row(

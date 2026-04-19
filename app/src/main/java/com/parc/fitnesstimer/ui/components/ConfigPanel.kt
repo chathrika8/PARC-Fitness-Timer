@@ -232,7 +232,7 @@ private fun SpinnerRow(
 ) {
     Surface(
         color  = SurfaceCard,
-        shape  = RoundedCornerShape(8.dp),
+        shape  = RoundedCornerShape(3.dp),
         tonalElevation = 0.dp,
         modifier = modifier.fillMaxWidth()
     ) {
