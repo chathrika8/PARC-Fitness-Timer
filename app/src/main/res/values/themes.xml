@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Base theme for the Activity window before Compose takes over.
+        Theme.Material.Light.NoActionBar is the safest choice for pure-Compose
+        apps (no AppCompat dependency): it is available from API 21+, removes
+        the action bar, and does not trigger dynamic-color or Material You
+        resolution that DeviceDefault can trigger on API 31+ devices.
+        All real styling is done inside ParcFitnessTimerTheme in Compose.
+    -->
+    <style name="Theme.PARCFitnessTimer" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@android:color/black</item>
+        <item name="android:statusBarColor">@android:color/black</item>
+        <item name="android:navigationBarColor">@android:color/black</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+    </style>
+</resources>

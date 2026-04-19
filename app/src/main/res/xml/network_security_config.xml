@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Allow cleartext (ws://, http://) traffic to the ESP32 AP address only.
+    All other traffic must use TLS. This is required because the device
+    does not support TLS on its WebSocket server.
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">192.168.4.1</domain>
+    </domain-config>
+    <!-- Fallback: cleartext allowed for any local/private IP the user configures -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">192.168</domain>
+    </domain-config>
+    <base-config cleartextTrafficPermitted="false" />
+</network-security-config>
