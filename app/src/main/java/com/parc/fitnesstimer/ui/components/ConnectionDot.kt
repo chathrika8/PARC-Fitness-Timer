@@ -16,6 +16,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.parc.fitnesstimer.domain.ConnectionState
@@ -63,9 +64,11 @@ fun ConnectionDot(
         )
         Spacer(Modifier.width(6.dp))
         Text(
-            text  = label,
-            fontSize = 11.sp,
-            color = TextSecondary
+            text          = label,
+            fontSize      = 11.sp,
+            fontFamily    = FontFamily.Monospace,
+            letterSpacing = 1.sp,
+            color         = TextSecondary
         )
     }
 }

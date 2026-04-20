@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -40,10 +41,11 @@ fun PhaseBar(
             .padding(horizontal = 20.dp, vertical = 6.dp)
     ) {
         Text(
-            text       = label,
-            color      = TextPrimary,
-            fontSize   = 13.sp,
-            fontWeight = FontWeight.Bold,
+            text          = label,
+            color         = TextPrimary,
+            fontSize      = 13.sp,
+            fontWeight    = FontWeight.Bold,
+            fontFamily    = FontFamily.Monospace,
             letterSpacing = 2.sp
         )
     }

@@ -32,6 +32,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -62,7 +63,7 @@ fun PresetsScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text("PRESETS", fontSize = 13.sp, fontWeight = FontWeight.Bold,
-                letterSpacing = 2.sp, color = TextSecondary)
+                fontFamily = FontFamily.Monospace, letterSpacing = 2.sp, color = TextSecondary)
             IconButton(onClick = viewModel::refresh) {
                 Icon(Icons.Default.Refresh, contentDescription = "Refresh",
                     tint = TextSecondary)
@@ -151,8 +152,9 @@ private fun PresetCard(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(preset.name, color = TextPrimary, fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold)
+                    fontWeight = FontWeight.SemiBold, fontFamily = FontFamily.Monospace)
                 Text(preset.summary, color = TextSecondary, fontSize = 12.sp,
+                    fontFamily = FontFamily.Monospace,
                     modifier = Modifier.padding(top = 2.dp))
             }
             IconButton(onClick = onLoad) {

@@ -31,6 +31,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -106,7 +107,7 @@ fun TimerScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text("PARC TIMER", fontSize = 13.sp, fontWeight = FontWeight.Bold,
-                letterSpacing = 2.sp, color = TextSecondary)
+                fontFamily = FontFamily.Monospace, letterSpacing = 2.sp, color = TextSecondary)
             ConnectionDot(state = connState)
         }
 
@@ -161,6 +162,7 @@ fun TimerScreen(
             Text(
                 text = "GET READY",
                 fontSize = 12.sp, letterSpacing = 3.sp,
+                fontFamily = FontFamily.Monospace,
                 color = TextSecondary, fontWeight = FontWeight.Bold
             )
             Spacer(Modifier.height(4.dp))

@@ -23,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -244,10 +245,11 @@ private fun SpinnerRow(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text     = label,
-                color    = TextSecondary,
-                fontSize = 13.sp,
-                modifier = Modifier.weight(1f)
+                text       = label,
+                color      = TextSecondary,
+                fontSize   = 13.sp,
+                fontFamily = FontFamily.Monospace,
+                modifier   = Modifier.weight(1f)
             )
 
             IconButton(onClick = onDec, modifier = Modifier.size(36.dp)) {
@@ -260,6 +262,7 @@ private fun SpinnerRow(
                 color      = TextPrimary,
                 fontSize   = 18.sp,
                 fontWeight = FontWeight.Bold,
+                fontFamily = FontFamily.Monospace,
                 textAlign  = TextAlign.Center,
                 modifier   = Modifier.width(72.dp)
             )

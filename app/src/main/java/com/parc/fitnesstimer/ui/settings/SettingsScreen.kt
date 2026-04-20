@@ -52,6 +52,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -304,6 +305,7 @@ private fun SectionHeader(title: String, modifier: Modifier = Modifier) {
         title,
         fontSize      = 11.sp,
         fontWeight    = FontWeight.Bold,
+        fontFamily    = FontFamily.Monospace,
         letterSpacing = 2.sp,
         color         = TextSecondary,
         modifier      = modifier.padding(horizontal = 16.dp, vertical = 8.dp)
@@ -316,6 +318,7 @@ private fun SectionTitle(title: String) {
         title,
         fontSize   = 15.sp,
         fontWeight = FontWeight.SemiBold,
+        fontFamily = FontFamily.Monospace,
         color      = TextPrimary,
         modifier   = Modifier.padding(bottom = 12.dp)
     )

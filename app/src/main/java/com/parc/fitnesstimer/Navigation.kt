@@ -1,6 +1,7 @@
 package com.parc.fitnesstimer
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FitnessCenter
@@ -9,6 +10,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.FitnessCenter
 import androidx.compose.material.icons.outlined.List
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -33,6 +35,7 @@ import com.parc.fitnesstimer.ui.presets.PresetsScreen
 import com.parc.fitnesstimer.ui.settings.SettingsScreen
 import com.parc.fitnesstimer.ui.theme.AccentRed
 import com.parc.fitnesstimer.ui.theme.BackgroundDeep
+import com.parc.fitnesstimer.ui.theme.BorderSubtle
 import com.parc.fitnesstimer.ui.theme.SurfaceCard
 import com.parc.fitnesstimer.ui.theme.TextSecondary
 import com.parc.fitnesstimer.ui.timer.TimerScreen
@@ -71,6 +74,8 @@ fun ParcNavHost() {
         containerColor = BackgroundDeep,
         bottomBar = {
             AnimatedVisibility(visible = showBottomBar) {
+                Column {
+                HorizontalDivider(color = BorderSubtle)
                 NavigationBar(
                     containerColor = SurfaceCard,
                     tonalElevation = 0.dp
@@ -109,6 +114,7 @@ fun ParcNavHost() {
                             )
                         )
                     }
+                }
                 }
             }
         }

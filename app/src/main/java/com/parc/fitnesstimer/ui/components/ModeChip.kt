@@ -13,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -68,11 +69,13 @@ private fun ModeChip(
         border       = BorderStroke(1.dp, borderColor)
     ) {
         Text(
-            text       = label,
-            fontSize   = 11.sp,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-            color      = textColor,
-            modifier   = Modifier.padding(horizontal = 14.dp, vertical = 7.dp)
+            text          = label,
+            fontSize      = 11.sp,
+            fontWeight    = if (selected) FontWeight.Bold else FontWeight.Normal,
+            fontFamily    = FontFamily.Monospace,
+            letterSpacing = 1.sp,
+            color         = textColor,
+            modifier      = Modifier.padding(horizontal = 14.dp, vertical = 7.dp)
         )
     }
 }
