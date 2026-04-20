@@ -5,12 +5,7 @@
     does not support TLS on its WebSocket server.
 -->
 <network-security-config>
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="false">192.168.4.1</domain>
-    </domain-config>
-    <!-- Fallback: cleartext allowed for any local/private IP the user configures -->
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">192.168</domain>
-    </domain-config>
-    <base-config cleartextTrafficPermitted="false" />
+    <!-- Allow cleartext traffic globally since the ESP32 web socket server 
+         on the local network may be dynamically assigned and doesn't support TLS. -->
+    <base-config cleartextTrafficPermitted="true" />
 </network-security-config>
