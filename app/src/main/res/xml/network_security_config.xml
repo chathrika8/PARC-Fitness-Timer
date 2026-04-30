@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Allow cleartext (ws://, http://) traffic to the ESP32 AP address only.
-    All other traffic must use TLS. This is required because the device
-    does not support TLS on its WebSocket server.
+    The ESP32 WebSocket server does not support TLS, so cleartext (ws://) is
+    required to talk to it. Network security config <domain> elements do not
+    accept CIDR ranges, and users may configure the timer at any LAN IP, so we
+    cannot scope this any tighter than "all traffic". This is acceptable given
+    the app only ever talks to the local timer; no credentials or PII are sent
+    to any other host.
 -->
 <network-security-config>
-    <!-- Allow cleartext traffic globally since the ESP32 web socket server 
-         on the local network may be dynamically assigned and doesn't support TLS. -->
     <base-config cleartextTrafficPermitted="true" />
 </network-security-config>

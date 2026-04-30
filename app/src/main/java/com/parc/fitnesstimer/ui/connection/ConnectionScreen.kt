@@ -58,8 +58,16 @@ fun ConnectionScreen(
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
-    ) {
-        viewModel.onConnectBluetoothTapped()
+    ) { grants ->
+        // Only attempt to connect if BLUETOOTH_CONNECT was actually granted.
+        // Calling into the BT stack without it throws SecurityException on
+        // Android 12+ and leaves the user staring at a useless spinner.
+        val granted = grants[Manifest.permission.BLUETOOTH_CONNECT] == true
+        if (granted) {
+            viewModel.onConnectBluetoothTapped()
+        } else {
+            viewModel.onBluetoothPermissionDenied()
+        }
     }
 
     LaunchedEffect(ui.wsConnected) {

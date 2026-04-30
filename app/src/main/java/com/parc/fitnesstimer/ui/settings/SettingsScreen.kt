@@ -63,6 +63,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.parc.fitnesstimer.data.model.DeviceSettings
+import com.parc.fitnesstimer.domain.ConnMode
 import com.parc.fitnesstimer.ui.theme.AccentGreen
 import com.parc.fitnesstimer.ui.theme.AccentRed
 import com.parc.fitnesstimer.ui.theme.BorderSubtle
@@ -108,7 +109,7 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
             )
             DigitReorderPanel(
                 dmap    = ui.dmap,
-                onSwap  = viewModel::swapDigits
+                onMove  = viewModel::moveDigit
             )
             Spacer(Modifier.height(12.dp))
             Button(
@@ -212,20 +213,36 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
             SectionTitle("Connection Settings")
 
             Text("Connection Mode", color = TextSecondary, fontSize = 13.sp)
+            // Use the ConnMode enum directly so UI labels stay in sync with the
+            // protocol IDs. Hand-typed labels here previously diverged from
+            // what the firmware actually does.
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                listOf("AP", "Client", "BT", "BT+WiFi").forEachIndexed { index, label ->
+                ConnMode.entries.forEach { mode ->
+                    val selected = ui.connMode == mode.id
                     OutlinedButton(
-                        onClick = { viewModel.onConnModeChanged(index) },
+                        onClick = { viewModel.onConnModeChanged(mode.id) },
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.outlinedButtonColors(
-                            containerColor = if (ui.connMode == index) AccentRed.copy(alpha = 0.2f) else SurfaceCard,
-                            contentColor = if (ui.connMode == index) AccentRed else TextSecondary
+                            containerColor = if (selected) AccentRed.copy(alpha = 0.2f) else SurfaceCard,
+                            contentColor = if (selected) AccentRed else TextSecondary
                         ),
-                        border = BorderStroke(1.dp, if (ui.connMode == index) AccentRed else BorderSubtle),
+                        border = BorderStroke(1.dp, if (selected) AccentRed else BorderSubtle),
                         contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)
-                    ) { Text(label, fontSize = 10.sp, maxLines = 1) }
+                    ) {
+                        Text(
+                            text     = shortConnModeLabel(mode),
+                            fontSize = 10.sp,
+                            maxLines = 1
+                        )
+                    }
                 }
             }
+            Text(
+                text  = ConnMode.fromId(ui.connMode).description,
+                color = TextSecondary,
+                fontSize = 11.sp,
+                modifier = Modifier.padding(top = 4.dp)
+            )
             
             Spacer(Modifier.height(8.dp))
 
@@ -457,24 +474,28 @@ private fun SoundToggle(label: String, checked: Boolean, onChecked: (Boolean) ->
 
 /**
  * Digit reorder panel — 6 draggable tiles.
- * Long-press + drag to reorder. Calls [onSwap](fromIndex, toIndex) on drop.
+ *
+ * Long-press to lift a tile, drag it up/down, release to drop. The list is only
+ * mutated on drag end (via [onMove]) so the list state stays stable while the
+ * gesture is in flight — this avoids the "tile under finger keeps changing
+ * identity" problem you get when reordering on every delta.
  */
 @Composable
 private fun DigitReorderPanel(
     dmap: List<Int>,
-    onSwap: (Int, Int) -> Unit
+    onMove: (Int, Int) -> Unit
 ) {
     val tileSize = 48.dp
     val spacing  = 6.dp
 
-    // Track which tile is being dragged and its current Y offset
-    var dragIndex  by remember { mutableIntStateOf(-1) }
+    // Index being dragged, and accumulated Y offset relative to its origin.
+    var dragFrom   by remember { mutableIntStateOf(-1) }
     var dragOffset by remember { mutableFloatStateOf(0f) }
 
     Column(verticalArrangement = Arrangement.spacedBy(spacing)) {
         dmap.forEachIndexed { physicalPos, logicalRole ->
             val label = DeviceSettings.DIGIT_LABELS.getOrElse(logicalRole) { "D$logicalRole" }
-            val isDragging = physicalPos == dragIndex
+            val isDragging = physicalPos == dragFrom
 
             Surface(
                 color  = if (isDragging) AccentRed.copy(alpha = 0.15f) else SurfaceElevated,
@@ -484,30 +505,25 @@ private fun DigitReorderPanel(
                     .fillMaxWidth()
                     .height(tileSize)
                     .offset { IntOffset(0, if (isDragging) dragOffset.roundToInt() else 0) }
-                    .pointerInput(physicalPos) {
+                    .pointerInput(physicalPos, dmap.size) {
                         detectDragGesturesAfterLongPress(
                             onDragStart = {
-                                dragIndex  = physicalPos
+                                dragFrom   = physicalPos
                                 dragOffset = 0f
                             },
                             onDrag = { _, delta ->
                                 dragOffset += delta.y
-                                // Determine swap target based on how far we've dragged
+                            },
+                            onDragEnd = {
                                 val tilePx = (tileSize + spacing).toPx()
                                 val steps  = (dragOffset / tilePx).roundToInt()
                                 val target = (physicalPos + steps).coerceIn(0, dmap.lastIndex)
-                                if (target != physicalPos) {
-                                    onSwap(physicalPos, target)
-                                    dragIndex  = target
-                                    dragOffset -= steps * tilePx
-                                }
-                            },
-                            onDragEnd = {
-                                dragIndex  = -1
+                                if (target != physicalPos) onMove(physicalPos, target)
+                                dragFrom   = -1
                                 dragOffset = 0f
                             },
                             onDragCancel = {
-                                dragIndex  = -1
+                                dragFrom   = -1
                                 dragOffset = 0f
                             }
                         )
@@ -539,3 +555,11 @@ private fun fieldColors() = OutlinedTextFieldDefaults.colors(
     focusedLabelColor    = AccentRed,
     cursorColor          = AccentRed
 )
+
+/** Compact label for the 4-button connection-mode row. */
+private fun shortConnModeLabel(mode: ConnMode): String = when (mode) {
+    ConnMode.BOTH_AUTO   -> "Auto"
+    ConnMode.WIFI_ONLY   -> "WiFi"
+    ConnMode.BT_ONLY     -> "BT"
+    ConnMode.BOTH_ALWAYS -> "Both"
+}
