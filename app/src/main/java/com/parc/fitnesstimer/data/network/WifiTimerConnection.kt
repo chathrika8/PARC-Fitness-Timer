@@ -36,21 +36,21 @@ import javax.inject.Singleton
  *            Using [sendText] for raw bytes will corrupt the data.
  */
 @Singleton
-class WebSocketClient @Inject constructor(
+class WifiTimerConnection @Inject constructor(
     private val okHttpClient: OkHttpClient
-) {
+) : TimerConnection {
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     // ── Connection state ──────────────────────────────────────────────────────
 
     private val _connectionState = MutableStateFlow(ConnectionState.DISCONNECTED)
-    val connectionState: StateFlow<ConnectionState> = _connectionState.asStateFlow()
+    override val connectionState: StateFlow<ConnectionState> = _connectionState.asStateFlow()
 
     // ── Incoming frames ───────────────────────────────────────────────────────
 
     /** All text frames from the server. Subscribers must not block. */
     private val _textFrames = MutableSharedFlow<String>(extraBufferCapacity = 64)
-    val textFrames: SharedFlow<String> = _textFrames.asSharedFlow()
+    override val textFrames: SharedFlow<String> = _textFrames.asSharedFlow()
 
     // ── Internal state ────────────────────────────────────────────────────────
 
@@ -66,7 +66,7 @@ class WebSocketClient @Inject constructor(
 
     private val listener = object : WebSocketListener() {
         override fun onOpen(webSocket: WebSocket, response: Response) {
-            this@WebSocketClient.webSocket = webSocket
+            this@WifiTimerConnection.webSocket = webSocket
             backoffIndex = 0
             _connectionState.value = ConnectionState.CONNECTED
             reconnectJob?.cancel()
@@ -80,7 +80,7 @@ class WebSocketClient @Inject constructor(
         override fun onMessage(webSocket: WebSocket, bytes: ByteString) = Unit
 
         override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-            this@WebSocketClient.webSocket = null
+            this@WifiTimerConnection.webSocket = null
             _connectionState.value = ConnectionState.DISCONNECTED
             scheduleReconnect()
         }
@@ -90,7 +90,7 @@ class WebSocketClient @Inject constructor(
         }
 
         override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
-            this@WebSocketClient.webSocket = null
+            this@WifiTimerConnection.webSocket = null
             _connectionState.value = ConnectionState.DISCONNECTED
             // 1000 = normal closure initiated by us; do not reconnect.
             if (code != 1000) scheduleReconnect()
@@ -99,15 +99,15 @@ class WebSocketClient @Inject constructor(
 
     // ── Public API ────────────────────────────────────────────────────────────
 
-    fun connect(url: String) {
+    override fun connect(urlOrAddress: String) {
         reconnectJob?.cancel()
-        currentUrl = url
+        currentUrl = urlOrAddress
         _connectionState.value = ConnectionState.CONNECTING
-        val request = Request.Builder().url(url).build()
+        val request = Request.Builder().url(urlOrAddress).build()
         okHttpClient.newWebSocket(request, listener)
     }
 
-    fun disconnect() {
+    override fun disconnect() {
         reconnectJob?.cancel()
         reconnectJob = null
         currentUrl = null
@@ -120,14 +120,14 @@ class WebSocketClient @Inject constructor(
      * Send a JSON text command to the server.
      * @return true if the frame was enqueued; false if not connected.
      */
-    fun sendText(json: String): Boolean = webSocket?.send(json) ?: false
+    override fun sendText(text: String): Boolean = webSocket?.send(text) ?: false
 
     /**
      * Send a raw binary frame — used exclusively for OTA firmware chunks.
      * OkHttp sends this as a WebSocket binary frame (opcode 0x02).
      * @return true if the frame was enqueued; false if not connected.
      */
-    fun sendBinary(bytes: ByteString): Boolean = webSocket?.send(bytes) ?: false
+    override fun sendBinary(bytes: ByteString): Boolean = webSocket?.send(bytes) ?: false
 
     // ── Reconnect logic ───────────────────────────────────────────────────────
 

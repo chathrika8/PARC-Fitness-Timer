@@ -30,6 +30,8 @@ data class ConnectionUiState(
     val wifiState: WifiUiState = WifiUiState.Idle,
     val manualIp: String = AppPreferences.DEFAULT_IP,
     val ssid: String = AppPreferences.DEFAULT_SSID,
+    val btDeviceName: String = "GymTimer",
+    val selectedTransport: Int = 0, // 0 = WiFi, 1 = BT
     val wsConnected: Boolean = false
 )
 
@@ -48,17 +50,35 @@ class ConnectionViewModel @Inject constructor(
             val savedIp   = prefs.lastIp.first()
             val savedSsid = prefs.lastSsid.first()
             val manualIp  = prefs.manualIp.first().ifEmpty { savedIp.ifEmpty { AppPreferences.DEFAULT_IP } }
-            _ui.update { it.copy(manualIp = manualIp, ssid = savedSsid) }
+            val lastTransport = prefs.lastTransport.first()
+            _ui.update { it.copy(manualIp = manualIp, ssid = savedSsid, selectedTransport = lastTransport) }
+            
+            // Auto-connect if WiFi was the last used transport
+            if (lastTransport == 0) {
+                // Background ping/connection
+                connectWebSocket()
+            }
         }
         viewModelScope.launch {
             repository.connectionState.collect { state ->
                 _ui.update { it.copy(wsConnected = state == ConnectionState.CONNECTED) }
+                if (state == ConnectionState.RECONNECTING || state == ConnectionState.CONNECTING) {
+                    _ui.update { it.copy(wifiState = WifiUiState.Connecting) }
+                } else if (state == ConnectionState.DISCONNECTED && _ui.value.wifiState == WifiUiState.Connecting) {
+                    _ui.update { it.copy(wifiState = WifiUiState.Idle) }
+                }
             }
         }
     }
 
+    fun onTransportSelected(transport: Int) {
+        _ui.update { it.copy(selectedTransport = transport) }
+        viewModelScope.launch { prefs.saveLastTransport(transport) }
+    }
+
     fun onManualIpChanged(ip: String) = _ui.update { it.copy(manualIp = ip) }
     fun onSsidChanged(ssid: String)   = _ui.update { it.copy(ssid = ssid) }
+    fun onBtDeviceNameChanged(name: String) = _ui.update { it.copy(btDeviceName = name) }
 
     /** Try connecting to the AP via WifiNetworkSpecifier then open WS. */
     fun onConnectWifiTapped() {
@@ -102,8 +122,13 @@ class ConnectionViewModel @Inject constructor(
             prefs.saveLastIp(ip)
             prefs.saveManualIp(ip)
         }
-        repository.connect(ip)
+        repository.connectWifi(ip)
         // wsConnected will flip to true via connectionState collector → triggers nav
+    }
+
+    fun onConnectBluetoothTapped() {
+        _ui.update { it.copy(wifiState = WifiUiState.Connecting) }
+        repository.connectBluetooth(_ui.value.btDeviceName)
     }
 
     fun resetState() = _ui.update { it.copy(wifiState = WifiUiState.Idle) }

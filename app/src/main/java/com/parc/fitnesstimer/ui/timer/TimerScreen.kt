@@ -178,16 +178,18 @@ fun TimerScreen(
         )
 
         // ── Config panel ──────────────────────────────────────────────────────
-        ConfigPanel(
-            mode          = ui.configMode,
-            workSecs      = ui.configWorkSecs,
-            restSecs      = ui.configRestSecs,
-            rounds        = ui.configRounds,
-            onWorkSecsChange = viewModel::onWorkSecsChange,
-            onRestSecsChange = viewModel::onRestSecsChange,
-            onRoundsChange   = viewModel::onRoundsChange,
-            modifier      = Modifier.padding(horizontal = 4.dp)
-        )
+        if (ui.configMode.hasConfig) {
+            ConfigPanel(
+                mode          = ui.configMode,
+                workSecs      = ui.configWorkSecs,
+                restSecs      = ui.configRestSecs,
+                rounds        = ui.configRounds,
+                onWorkSecsChange = viewModel::onWorkSecsChange,
+                onRestSecsChange = viewModel::onRestSecsChange,
+                onRoundsChange   = viewModel::onRoundsChange,
+                modifier      = Modifier.padding(horizontal = 4.dp)
+            )
+        }
 
         Spacer(Modifier.height(8.dp))
 

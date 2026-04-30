@@ -21,6 +21,7 @@ class AppPreferences @Inject constructor(
         private val KEY_LAST_IP   = stringPreferencesKey("last_ip")
         private val KEY_LAST_SSID = stringPreferencesKey("last_ssid")
         private val KEY_MANUAL_IP = stringPreferencesKey("manual_ip")
+        private val KEY_LAST_TRANSPORT = androidx.datastore.preferences.core.intPreferencesKey("last_transport")
 
         const val DEFAULT_IP   = "192.168.4.1"
         const val DEFAULT_SSID = "GymTimer"
@@ -45,6 +46,11 @@ class AppPreferences @Inject constructor(
         prefs[KEY_MANUAL_IP] ?: ""
     }
 
+    /** Last used transport (0 = WiFi, 1 = Bluetooth). */
+    val lastTransport: Flow<Int> = dataStore.data.map { prefs ->
+        prefs[KEY_LAST_TRANSPORT] ?: 0
+    }
+
     suspend fun saveLastIp(ip: String) {
         dataStore.edit { it[KEY_LAST_IP] = ip }
     }
@@ -55,6 +61,10 @@ class AppPreferences @Inject constructor(
 
     suspend fun saveManualIp(ip: String) {
         dataStore.edit { it[KEY_MANUAL_IP] = ip }
+    }
+
+    suspend fun saveLastTransport(transport: Int) {
+        dataStore.edit { it[KEY_LAST_TRANSPORT] = transport }
     }
 
     suspend fun clearLastIp() {

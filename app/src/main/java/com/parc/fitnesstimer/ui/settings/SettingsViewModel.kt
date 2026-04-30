@@ -33,9 +33,20 @@ data class SettingsUiState(
     val dmap: List<Int> = listOf(0, 1, 2, 3, 4, 5),
     val buzzConfig: BuzzConfig = BuzzConfig(),
     val isLoading: Boolean = true,
+    
+    // WiFi / Conn
     val ssidInput: String = "GymTimer",
     val passInput: String = "",
     val showPass: Boolean = false,
+    val connMode: Int = 0,
+    val btNameInput: String = "GymTimer",
+    val btPinInput: String = "123456",
+    
+    // Display
+    val colonMode: Int = 0,
+    val c321Mode: Int = 0,
+    
+    // OTA
     val otaState: OtaUiState = OtaUiState.Idle,
     val selectedFileUri: Uri? = null,
     val selectedFileName: String = ""
@@ -60,6 +71,11 @@ class SettingsViewModel @Inject constructor(
                 _ui.update { it.copy(
                     dmap       = settings.dmap.toMutableList(),
                     buzzConfig = settings.bz,
+                    connMode   = settings.conn.mode,
+                    btNameInput = settings.conn.btName,
+                    btPinInput  = settings.conn.btPin,
+                    colonMode   = settings.disp.colon,
+                    c321Mode    = settings.disp.c321,
                     isLoading  = false
                 )}
             }
@@ -126,10 +142,27 @@ class SettingsViewModel @Inject constructor(
     fun onSsidChanged(v: String)  = _ui.update { it.copy(ssidInput = v) }
     fun onPassChanged(v: String)  = _ui.update { it.copy(passInput = v) }
     fun onShowPassToggled()       = _ui.update { it.copy(showPass = !it.showPass) }
+    fun onConnModeChanged(v: Int) = _ui.update { it.copy(connMode = v) }
+    fun onBtNameChanged(v: String) = _ui.update { it.copy(btNameInput = v) }
+    fun onBtPinChanged(v: String) = _ui.update { it.copy(btPinInput = v) }
 
     fun onApplyWifi() {
         val ui = _ui.value
         repository.sendWifiSet(ui.ssidInput, ui.passInput)
+    }
+
+    fun onApplyConnSet() {
+        val ui = _ui.value
+        repository.sendConnSet(ui.connMode, ui.btNameInput, ui.btPinInput)
+    }
+
+    // ── Display Settings ──────────────────────────────────────────────────────
+    fun onColonModeChanged(v: Int) = _ui.update { it.copy(colonMode = v) }
+    fun onC321ModeChanged(v: Int) = _ui.update { it.copy(c321Mode = v) }
+
+    fun saveDisplaySettings() {
+        val ui = _ui.value
+        repository.sendDisplaySave(ui.colonMode, ui.c321Mode)
     }
 
     fun onRestartDevice() = repository.sendRestart()

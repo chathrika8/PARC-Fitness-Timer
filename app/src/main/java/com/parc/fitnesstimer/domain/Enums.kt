@@ -96,3 +96,35 @@ enum class ConnectionState {
     CONNECTED,
     RECONNECTING
 }
+
+/**
+ * Transport mode configuration (WiFi vs BT).
+ */
+enum class ConnMode(val id: Int, val label: String, val description: String) {
+    BOTH_AUTO(0, "Auto (first wins)",
+        "Both start. First transport to connect disables the other. Reconnect re-enables both."),
+    WIFI_ONLY(1, "WiFi only",
+        "Bluetooth never starts. Web dashboard always available."),
+    BT_ONLY(2, "Bluetooth only",
+        "WiFi AP never starts. Control via this app only."),
+    BOTH_ALWAYS(3, "Both always",
+        "WiFi and Bluetooth always active. Multiple clients can connect simultaneously.");
+
+    companion object {
+        fun fromId(id: Int) = entries.firstOrNull { it.id == id } ?: BOTH_AUTO
+    }
+}
+
+/**
+ * Colon behavior settings.
+ */
+enum class ColonMode(val id: Int, val label: String) {
+    ALWAYS_ON(0, "Always on"),
+    ALWAYS_OFF(1, "Always off"),
+    BLINK_IDLE_PAUSE(2, "Blink when idle / paused"),
+    ALWAYS_BLINK(3, "Always blink");
+
+    companion object {
+        fun fromId(id: Int) = entries.firstOrNull { it.id == id } ?: BLINK_IDLE_PAUSE
+    }
+}

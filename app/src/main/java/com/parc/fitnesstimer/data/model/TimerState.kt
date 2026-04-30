@@ -52,9 +52,9 @@ data class DisplayDigits(
                     d0 = null,
                     d1 = null,
                     d2 = null,
-                    d3 = null,
+                    d3 = state.pre,
                     d4 = null,
-                    d5 = state.pre,
+                    d5 = null,
                     colonOn = false
                 )
                 else -> {
@@ -64,7 +64,7 @@ data class DisplayDigits(
                         d0 = if (showRound && state.round >= 10) state.round / 10 else null,
                         d1 = if (showRound) state.round % 10 else null,
                         d2 = if (state.mm >= 10) state.mm / 10 else null,
-                        d3 = state.mm % 10,
+                        d3 = if (state.mm > 0) state.mm % 10 else null,
                         d4 = state.ss / 10,
                         d5 = state.ss % 10,
                         colonOn = colon

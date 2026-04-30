@@ -158,15 +158,112 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
         }
 
         // ══════════════════════════════════════════════════════════════════════
-        // SECTION 3 — WiFi Settings
+        // SECTION 3 — Display Settings
         // ══════════════════════════════════════════════════════════════════════
         SettingCard {
-            SectionTitle("WiFi / Access Point")
+            SectionTitle("Display Settings")
+            
+            Text("Colon behavior", color = TextSecondary, fontSize = 13.sp)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                listOf("Off", "Solid", "Blink", "Alt").forEachIndexed { index, label ->
+                    OutlinedButton(
+                        onClick = { viewModel.onColonModeChanged(index) },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = if (ui.colonMode == index) AccentRed.copy(alpha = 0.2f) else SurfaceCard,
+                            contentColor = if (ui.colonMode == index) AccentRed else TextSecondary
+                        ),
+                        border = BorderStroke(1.dp, if (ui.colonMode == index) AccentRed else BorderSubtle)
+                    ) { Text(label, fontSize = 11.sp) }
+                }
+            }
+            
+            Spacer(Modifier.height(8.dp))
+            
+            Text("Pre-start Countdown", color = TextSecondary, fontSize = 13.sp)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                listOf("10s", "3s").forEachIndexed { index, label ->
+                    val value = if (index == 0) 10 else 3
+                    val isSelected = ui.c321Mode == index
+                    OutlinedButton(
+                        onClick = { viewModel.onC321ModeChanged(index) },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = if (isSelected) AccentRed.copy(alpha = 0.2f) else SurfaceCard,
+                            contentColor = if (isSelected) AccentRed else TextSecondary
+                        ),
+                        border = BorderStroke(1.dp, if (isSelected) AccentRed else BorderSubtle)
+                    ) { Text(label, fontSize = 12.sp) }
+                }
+            }
+            
+            Spacer(Modifier.height(8.dp))
+            Button(
+                onClick  = viewModel::saveDisplaySettings,
+                modifier = Modifier.fillMaxWidth(),
+                colors   = ButtonDefaults.buttonColors(containerColor = AccentRed)
+            ) { Text("Save Display Settings") }
+        }
+
+        // ══════════════════════════════════════════════════════════════════════
+        // SECTION 4 — Connection Settings
+        // ══════════════════════════════════════════════════════════════════════
+        SettingCard {
+            SectionTitle("Connection Settings")
+
+            Text("Connection Mode", color = TextSecondary, fontSize = 13.sp)
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                listOf("AP", "Client", "BT", "BT+WiFi").forEachIndexed { index, label ->
+                    OutlinedButton(
+                        onClick = { viewModel.onConnModeChanged(index) },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = if (ui.connMode == index) AccentRed.copy(alpha = 0.2f) else SurfaceCard,
+                            contentColor = if (ui.connMode == index) AccentRed else TextSecondary
+                        ),
+                        border = BorderStroke(1.dp, if (ui.connMode == index) AccentRed else BorderSubtle),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)
+                    ) { Text(label, fontSize = 10.sp, maxLines = 1) }
+                }
+            }
+            
+            Spacer(Modifier.height(8.dp))
+
+            OutlinedTextField(
+                value         = ui.btNameInput,
+                onValueChange = viewModel::onBtNameChanged,
+                label         = { Text("Bluetooth Name") },
+                singleLine    = true,
+                modifier      = Modifier.fillMaxWidth(),
+                colors        = fieldColors()
+            )
+            Spacer(Modifier.height(8.dp))
+            OutlinedTextField(
+                value         = ui.btPinInput,
+                onValueChange = viewModel::onBtPinChanged,
+                label         = { Text("Bluetooth PIN") },
+                singleLine    = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+                modifier      = Modifier.fillMaxWidth(),
+                colors        = fieldColors()
+            )
+            
+            Spacer(Modifier.height(12.dp))
+            Button(
+                onClick  = viewModel::onApplyConnSet,
+                modifier = Modifier.fillMaxWidth(),
+                colors   = ButtonDefaults.buttonColors(containerColor = AccentRed)
+            ) { Text("Save Connection Mode") }
+            
+            HorizontalDivider(color = BorderSubtle, modifier = Modifier.padding(vertical = 12.dp))
+            
+            Text("WiFi Client Credentials", color = TextSecondary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(4.dp))
 
             OutlinedTextField(
                 value         = ui.ssidInput,
                 onValueChange = viewModel::onSsidChanged,
-                label         = { Text("AP SSID") },
+                label         = { Text("Client SSID") },
                 singleLine    = true,
                 modifier      = Modifier.fillMaxWidth(),
                 colors        = fieldColors()
@@ -200,7 +297,7 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                 onClick  = viewModel::onApplyWifi,
                 modifier = Modifier.fillMaxWidth(),
                 colors   = ButtonDefaults.buttonColors(containerColor = AccentRed)
-            ) { Text("Apply & Restart Device") }
+            ) { Text("Save WiFi Credentials") }
         }
 
         // ══════════════════════════════════════════════════════════════════════

@@ -5,7 +5,9 @@ import com.parc.fitnesstimer.data.model.OtaEvent
 import com.parc.fitnesstimer.data.model.Preset
 import com.parc.fitnesstimer.data.model.PresetsResponse
 import com.parc.fitnesstimer.data.model.TimerStateDto
-import com.parc.fitnesstimer.data.network.WebSocketClient
+import com.parc.fitnesstimer.data.network.BluetoothTimerConnection
+import com.parc.fitnesstimer.data.network.TimerConnection
+import com.parc.fitnesstimer.data.network.WifiTimerConnection
 import com.parc.fitnesstimer.data.prefs.AppPreferences
 import com.parc.fitnesstimer.domain.ConnectionState
 import kotlinx.coroutines.CoroutineScope
@@ -20,11 +22,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.int
-import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okio.ByteString
@@ -41,15 +41,19 @@ import javax.inject.Singleton
  */
 @Singleton
 class TimerRepository @Inject constructor(
-    private val wsClient: WebSocketClient,
+    private val wifiConnection: WifiTimerConnection,
+    private val btConnection: BluetoothTimerConnection,
     private val prefs: AppPreferences,
     private val json: Json
 ) {
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
+    private var activeConnection: TimerConnection = wifiConnection
+
     // ── Exposed flows ─────────────────────────────────────────────────────────
 
-    val connectionState: StateFlow<ConnectionState> = wsClient.connectionState
+    private val _connectionState = MutableStateFlow(ConnectionState.DISCONNECTED)
+    val connectionState: StateFlow<ConnectionState> = _connectionState.asStateFlow()
 
     private val _timerState = MutableStateFlow(TimerStateDto())
     val timerState: StateFlow<TimerStateDto> = _timerState.asStateFlow()
@@ -67,69 +71,110 @@ class TimerRepository @Inject constructor(
     private val _otaEvents = MutableSharedFlow<OtaEvent>(replay = 1, extraBufferCapacity = 32)
     val otaEvents: SharedFlow<OtaEvent> = _otaEvents.asSharedFlow()
 
+    private val _commandAcks = MutableSharedFlow<String>(extraBufferCapacity = 32)
+    val commandAcks: SharedFlow<String> = _commandAcks.asSharedFlow()
+
     // ── Initialisation ────────────────────────────────────────────────────────
 
     init {
         scope.launch {
-            wsClient.textFrames.collect { text -> handleTextFrame(text) }
+            wifiConnection.textFrames.collect { text -> handleTextFrame(text) }
+        }
+        scope.launch {
+            btConnection.textFrames.collect { text -> handleTextFrame(text) }
+        }
+        scope.launch {
+            wifiConnection.connectionState.collect { state ->
+                if (activeConnection == wifiConnection) _connectionState.value = state
+            }
+        }
+        scope.launch {
+            btConnection.connectionState.collect { state ->
+                if (activeConnection == btConnection) _connectionState.value = state
+            }
         }
     }
 
     // ── Connection management ─────────────────────────────────────────────────
 
-    fun connect(ip: String) {
-        val url = prefs.buildWsUrl(ip)
-        scope.launch { prefs.saveLastIp(ip) }
-        wsClient.connect(url)
+    fun useWifi() {
+        activeConnection = wifiConnection
+        _connectionState.value = activeConnection.connectionState.value
     }
 
-    fun disconnect() = wsClient.disconnect()
+    fun useBluetooth() {
+        activeConnection = btConnection
+        _connectionState.value = activeConnection.connectionState.value
+    }
+
+    fun connectWifi(ip: String) {
+        useWifi()
+        val url = prefs.buildWsUrl(ip)
+        scope.launch { prefs.saveLastIp(ip) }
+        activeConnection.connect(url)
+    }
+
+    fun connectBluetooth(deviceName: String) {
+        useBluetooth()
+        activeConnection.connect(deviceName)
+    }
+
+    fun disconnect() = activeConnection.disconnect()
 
     // ── Commands ──────────────────────────────────────────────────────────────
 
-    fun sendStart()  = wsClient.sendText("""{"cmd":"start"}""")
-    fun sendPause()  = wsClient.sendText("""{"cmd":"pause"}""")
-    fun sendReset()  = wsClient.sendText("""{"cmd":"reset"}""")
-    fun sendRinc()   = wsClient.sendText("""{"cmd":"rinc"}""")
+    fun sendStart()  = activeConnection.sendText("""{"cmd":"start"}""")
+    fun sendPause()  = activeConnection.sendText("""{"cmd":"pause"}""")
+    fun sendReset()  = activeConnection.sendText("""{"cmd":"reset"}""")
+    fun sendRinc()   = activeConnection.sendText("""{"cmd":"rinc"}""")
 
     fun sendConfig(mode: Int, work: Int, rest: Int, rounds: Int) =
-        wsClient.sendText("""{"cmd":"cfg","mode":$mode,"work":$work,"rest":$rest,"rounds":$rounds}""")
+        activeConnection.sendText("""{"cmd":"cfg","mode":$mode,"work":$work,"rest":$rest,"rounds":$rounds}""")
 
-    fun sendPresetsGet() = wsClient.sendText("""{"cmd":"presets_get"}""")
+    fun sendPresetsGet() = activeConnection.sendText("""{"cmd":"presets_get"}""")
 
     fun sendPresetSave(slot: Int, name: String) =
-        wsClient.sendText("""{"cmd":"preset_save","slot":$slot,"name":"${name.replace("\"", "\\\"")}"}""")
+        activeConnection.sendText("""{"cmd":"preset_save","slot":$slot,"name":"${name.replace("\"", "\\\"")}"}""")
 
     fun sendPresetLoad(slot: Int) =
-        wsClient.sendText("""{"cmd":"preset_load","slot":$slot}""")
+        activeConnection.sendText("""{"cmd":"preset_load","slot":$slot}""")
 
     fun sendPresetDel(slot: Int) =
-        wsClient.sendText("""{"cmd":"preset_del","slot":$slot}""")
+        activeConnection.sendText("""{"cmd":"preset_del","slot":$slot}""")
 
-    fun sendSettingsGet() = wsClient.sendText("""{"cmd":"settings_get"}""")
+    fun sendSettingsGet() = activeConnection.sendText("""{"cmd":"settings_get"}""")
 
     fun sendDmapSave(map: List<Int>) =
-        wsClient.sendText("""{"cmd":"dmap_save","map":[${map.joinToString(",")}]}""")
+        activeConnection.sendText("""{"cmd":"dmap_save","map":[${map.joinToString(",")}]}""")
 
     fun sendSoundSave(vol: Int, ev: Int, modes: Int) =
-        wsClient.sendText("""{"cmd":"sound_save","vol":$vol,"ev":$ev,"modes":$modes}""")
+        activeConnection.sendText("""{"cmd":"sound_save","vol":$vol,"ev":$ev,"modes":$modes}""")
+
+    fun sendDisplaySave(colonMode: Int, countdown321: Int) =
+        activeConnection.sendText("""{"cmd":"display_save","colon":$colonMode,"c321":$countdown321}""")
+
+    fun sendConnSet(mode: Int, btName: String, btPin: String) {
+        val escapedName = btName.replace("\"", "\\\"")
+        val escapedPin  = btPin.replace("\"", "\\\"")
+        activeConnection.sendText("""{"cmd":"conn_set","mode":$mode,"btName":"$escapedName","btPin":"$escapedPin"}""")
+    }
 
     fun sendWifiSet(ssid: String, pass: String) {
         val escapedSsid = ssid.replace("\"", "\\\"")
         val escapedPass = pass.replace("\"", "\\\"")
-        wsClient.sendText("""{"cmd":"wifi_set","ssid":"$escapedSsid","pass":"$escapedPass"}""")
+        activeConnection.sendText("""{"cmd":"wifi_set","ssid":"$escapedSsid","pass":"$escapedPass"}""")
     }
 
-    fun sendRestart() = wsClient.sendText("""{"cmd":"restart"}""")
+    fun sendRestart() = activeConnection.sendText("""{"cmd":"restart"}""")
 
     fun sendOtaBegin(size: Int) =
-        wsClient.sendText("""{"cmd":"ota_begin","size":$size}""")
+        activeConnection.sendText("""{"cmd":"ota_begin","size":$size}""")
 
     /**
      * Send a raw binary WebSocket frame containing OTA data.
      * Uses OkHttp's [WebSocket.send(ByteString)] which produces opcode 0x02 (binary).
      */
-    fun sendOtaChunk(bytes: ByteString): Boolean = wsClient.sendBinary(bytes)
+    fun sendOtaChunk(bytes: ByteString): Boolean = activeConnection.sendBinary(bytes)
 
     // ── Frame parsing ─────────────────────────────────────────────────────────
 
@@ -157,9 +202,16 @@ class TimerRepository @Inject constructor(
                 }
                 root.containsKey("restarting") -> {
                     _otaEvents.tryEmit(OtaEvent.Restarting)
+                    _commandAcks.tryEmit("restarting")
                 }
-                root.containsKey("dmap_saved") || root.containsKey("sound_saved") -> {
-                    // Acknowledged — no action needed beyond what the ViewModel tracks.
+                root.containsKey("dmap_saved") -> {
+                    _commandAcks.tryEmit("dmap_saved")
+                }
+                root.containsKey("sound_saved") -> {
+                    _commandAcks.tryEmit("sound_saved")
+                }
+                root.containsKey("disp_saved") -> {
+                    _commandAcks.tryEmit("disp_saved")
                 }
                 else -> {
                     // Standard 100 ms state broadcast

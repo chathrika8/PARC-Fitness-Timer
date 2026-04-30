@@ -37,16 +37,39 @@ data class BuzzConfig(
 }
 
 /**
+ * Display configuration from server settings response.
+ */
+@Serializable
+data class DispConfig(
+    val colon: Int = 2,
+    val c321: Int = 63
+)
+
+/**
+ * Connection configuration from server settings response.
+ */
+@Serializable
+data class ConnConfig(
+    val mode: Int = 0,
+    val btName: String = "GymTimer",
+    val btPin: String = ""
+)
+
+/**
  * Full device settings response from server.
  *
  * @param dmap Physical digit position → logical digit mapping (length 6)
  * @param bz   Buzzer configuration
+ * @param disp Display configuration
+ * @param conn Connection configuration
  */
 @Serializable
 data class DeviceSettings(
     val type: String = "settings",
     val dmap: List<Int> = listOf(0, 1, 2, 3, 4, 5),
-    @SerialName("bz") val bz: BuzzConfig = BuzzConfig()
+    @SerialName("bz") val bz: BuzzConfig = BuzzConfig(),
+    @SerialName("disp") val disp: DispConfig = DispConfig(),
+    @SerialName("conn") val conn: ConnConfig = ConnConfig()
 ) {
     /** Human-readable label for each logical digit position. */
     companion object {

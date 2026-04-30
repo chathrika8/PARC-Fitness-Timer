@@ -37,7 +37,7 @@ data class TimerUiState(
     val runState: TimerRunState get() = serverState.runState
     val currentMode: TimerMode get() = serverState.timerMode
     val currentPhase get() = serverState.timerPhase
-    val isRunning: Boolean get() = runState == TimerRunState.RUNNING
+    val isRunning: Boolean get() = runState == TimerRunState.RUNNING || runState == TimerRunState.TRANSITION
     val isPaused: Boolean get() = runState == TimerRunState.PAUSED
     val isIdle: Boolean get() = runState == TimerRunState.IDLE
     val isDone: Boolean get() = runState == TimerRunState.DONE
@@ -96,7 +96,7 @@ class TimerViewModel @Inject constructor(
     // ── Mode selection ────────────────────────────────────────────────────────
 
     fun onModeChipTapped(mode: TimerMode) {
-        if (_ui.value.isRunning) {
+        if (_ui.value.isRunning || _ui.value.isPaused) {
             // Ask for confirmation before switching during an active workout
             _ui.update { it.copy(showModeConfirmDialog = true, pendingMode = mode) }
         } else {
