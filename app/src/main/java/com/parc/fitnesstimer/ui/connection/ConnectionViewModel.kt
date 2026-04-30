@@ -52,20 +52,33 @@ class ConnectionViewModel @Inject constructor(
             val manualIp  = prefs.manualIp.first().ifEmpty { savedIp.ifEmpty { AppPreferences.DEFAULT_IP } }
             val lastTransport = prefs.lastTransport.first()
             _ui.update { it.copy(manualIp = manualIp, ssid = savedSsid, selectedTransport = lastTransport) }
-            
-            // Auto-connect if WiFi was the last used transport
-            if (lastTransport == 0) {
-                // Background ping/connection
+
+            // Auto-connect if WiFi was the last used transport AND we aren't
+            // already connected (re-entering the screen shouldn't kick off a
+            // duplicate connection attempt against a healthy socket).
+            if (lastTransport == 0 &&
+                repository.connectionState.value != ConnectionState.CONNECTED) {
                 connectWebSocket()
             }
         }
         viewModelScope.launch {
             repository.connectionState.collect { state ->
                 _ui.update { it.copy(wsConnected = state == ConnectionState.CONNECTED) }
-                if (state == ConnectionState.RECONNECTING || state == ConnectionState.CONNECTING) {
-                    _ui.update { it.copy(wifiState = WifiUiState.Connecting) }
-                } else if (state == ConnectionState.DISCONNECTED && _ui.value.wifiState == WifiUiState.Connecting) {
-                    _ui.update { it.copy(wifiState = WifiUiState.Idle) }
+                when (state) {
+                    ConnectionState.CONNECTING,
+                    ConnectionState.RECONNECTING -> {
+                        _ui.update { it.copy(wifiState = WifiUiState.Connecting) }
+                    }
+                    ConnectionState.CONNECTED -> {
+                        _ui.update { it.copy(wifiState = WifiUiState.Success) }
+                    }
+                    ConnectionState.DISCONNECTED -> {
+                        // Only clear an in-flight Connecting indicator. Don't
+                        // overwrite a terminal Error / ManualRequired message.
+                        if (_ui.value.wifiState == WifiUiState.Connecting) {
+                            _ui.update { it.copy(wifiState = WifiUiState.Idle) }
+                        }
+                    }
                 }
             }
         }
@@ -117,6 +130,12 @@ class ConnectionViewModel @Inject constructor(
 
     private fun connectWebSocket() {
         val ip = _ui.value.manualIp.trim().ifEmpty { AppPreferences.DEFAULT_IP }
+        if (!isValidIpv4(ip)) {
+            _ui.update { it.copy(wifiState = WifiUiState.Error(
+                "\"$ip\" is not a valid IP address. Try 192.168.4.1."
+            )) }
+            return
+        }
         _ui.update { it.copy(wifiState = WifiUiState.Connecting) }
         viewModelScope.launch {
             prefs.saveLastIp(ip)
@@ -126,9 +145,24 @@ class ConnectionViewModel @Inject constructor(
         // wsConnected will flip to true via connectionState collector → triggers nav
     }
 
+    private fun isValidIpv4(ip: String): Boolean {
+        val parts = ip.split('.')
+        if (parts.size != 4) return false
+        return parts.all { part ->
+            val n = part.toIntOrNull() ?: return false
+            n in 0..255 && part == n.toString()
+        }
+    }
+
     fun onConnectBluetoothTapped() {
         _ui.update { it.copy(wifiState = WifiUiState.Connecting) }
         repository.connectBluetooth(_ui.value.btDeviceName)
+    }
+
+    fun onBluetoothPermissionDenied() {
+        _ui.update { it.copy(wifiState = WifiUiState.Error(
+            "Bluetooth permission is required to connect to the timer."
+        )) }
     }
 
     fun resetState() = _ui.update { it.copy(wifiState = WifiUiState.Idle) }

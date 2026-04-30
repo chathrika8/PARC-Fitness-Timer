@@ -5,18 +5,19 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.parc.fitnesstimer.data.model.BuzzConfig
-import com.parc.fitnesstimer.data.model.DeviceSettings
 import com.parc.fitnesstimer.data.model.OtaEvent
 import com.parc.fitnesstimer.data.repository.TimerRepository
+import com.parc.fitnesstimer.domain.ConnectionState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import okio.ByteString.Companion.toByteString
 import javax.inject.Inject
 
@@ -80,10 +81,19 @@ class SettingsViewModel @Inject constructor(
                 )}
             }
         }
-        // Collect OTA events 
+        // Collect OTA events
         viewModelScope.launch {
             repository.otaEvents.collect { event ->
                 handleOtaEvent(event)
+            }
+        }
+        // Drop the loading spinner if the socket disconnects so the screen
+        // doesn't hang forever waiting for settings that will never arrive.
+        viewModelScope.launch {
+            repository.connectionState.collect { state ->
+                if (state == ConnectionState.DISCONNECTED) {
+                    _ui.update { it.copy(isLoading = false) }
+                }
             }
         }
         // Request current settings on first load
@@ -91,19 +101,25 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun refresh() {
+        // Don't show a spinner that will never resolve.
+        if (repository.connectionState.value != ConnectionState.CONNECTED) return
         _ui.update { it.copy(isLoading = true) }
         repository.sendSettingsGet()
     }
 
     // ── Digit map reorder ─────────────────────────────────────────────────────
 
-    /** Swap the physical positions of two digits. */
-    fun swapDigits(from: Int, to: Int) {
+    /**
+     * Move the digit at [from] to position [to], shifting items in between.
+     * This is the correct semantic for drag-reorder; a plain swap would leave
+     * intermediate items unchanged.
+     */
+    fun moveDigit(from: Int, to: Int) {
         if (from == to) return
         val current = _ui.value.dmap.toMutableList()
-        val tmp = current[from]
-        current[from] = current[to]
-        current[to] = tmp
+        if (from !in current.indices || to !in current.indices) return
+        val item = current.removeAt(from)
+        current.add(to, item)
         _ui.update { it.copy(dmap = current) }
     }
 
@@ -208,38 +224,86 @@ class SettingsViewModel @Inject constructor(
     private fun handleOtaEvent(event: OtaEvent) {
         when (event) {
             OtaEvent.Ready -> {
-                // Begin streaming binary chunks
                 val bytes = otaBytes ?: return
+                otaJob?.cancel()
                 otaJob = viewModelScope.launch(Dispatchers.IO) {
                     var offset = 0
-                    while (offset < bytes.size) {
-                        val chunkSize = minOf(4096, bytes.size - offset)
-                        // ByteString.of(bytes, offset, count) creates a binary WS frame
+                    while (offset < bytes.size && isActive) {
+                        // Abort if the underlying socket dropped — sending into a
+                        // closed connection corrupts the firmware image.
+                        if (repository.connectionState.value != ConnectionState.CONNECTED) {
+                            _ui.update { it.copy(otaState = OtaUiState.Error(
+                                "Connection lost during upload"
+                            )) }
+                            return@launch
+                        }
+
+                        val chunkSize = minOf(OTA_CHUNK_SIZE, bytes.size - offset)
                         val chunk = bytes.toByteString(offset, chunkSize)
-                        repository.sendOtaChunk(chunk)
+                        val sent = repository.sendOtaChunk(chunk)
+                        if (!sent) {
+                            _ui.update { it.copy(otaState = OtaUiState.Error(
+                                "Failed to send firmware chunk"
+                            )) }
+                            return@launch
+                        }
                         offset += chunkSize
+
+                        // Tiny pacing delay so OkHttp's send queue and the ESP32's
+                        // receive buffer don't get overwhelmed on a fast link.
+                        delay(OTA_CHUNK_PACING_MS)
                     }
                 }
             }
             is OtaEvent.Progress -> {
+                val total = otaBytes?.size?.coerceAtLeast(1) ?: 1
                 _ui.update { it.copy(otaState = OtaUiState.Uploading(
-                    progress = event.written.toFloat() / (otaBytes?.size?.coerceAtLeast(1) ?: 1),
+                    progress = event.written.toFloat() / total,
                     written  = event.written,
                     total    = event.total
                 ))}
             }
             OtaEvent.Done -> {
+                otaJob?.cancel()
+                otaJob = null
                 otaBytes = null
                 _ui.update { it.copy(otaState = OtaUiState.Done) }
             }
             is OtaEvent.Error -> {
+                otaJob?.cancel()
+                otaJob = null
                 _ui.update { it.copy(otaState = OtaUiState.Error(event.message)) }
             }
             OtaEvent.Restarting -> {
-                // Device will restart; OTA done state handles UI
+                // Device is restarting; the Done state already drives the UI.
             }
         }
     }
 
-    fun resetOtaState() = _ui.update { it.copy(otaState = OtaUiState.Idle, selectedFileName = "") }
+    fun cancelOta() {
+        otaJob?.cancel()
+        otaJob = null
+        otaBytes = null
+        _ui.update { it.copy(
+            otaState         = OtaUiState.Idle,
+            selectedFileUri  = null,
+            selectedFileName = ""
+        )}
+    }
+
+    fun resetOtaState() = _ui.update { it.copy(
+        otaState         = OtaUiState.Idle,
+        selectedFileUri  = null,
+        selectedFileName = ""
+    )}
+
+    override fun onCleared() {
+        super.onCleared()
+        otaJob?.cancel()
+    }
+
+    private companion object {
+        const val OTA_CHUNK_SIZE      = 4096
+        const val OTA_CHUNK_PACING_MS = 5L
+    }
 }

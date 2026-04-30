@@ -63,8 +63,11 @@ data class DisplayDigits(
                     DisplayDigits(
                         d0 = if (showRound && state.round >= 10) state.round / 10 else null,
                         d1 = if (showRound) state.round % 10 else null,
+                        // Leading zero on minute tens is suppressed; the minute
+                        // units digit is always shown so "0:30" doesn't render
+                        // as a blank with a stray colon.
                         d2 = if (state.mm >= 10) state.mm / 10 else null,
-                        d3 = if (state.mm > 0) state.mm % 10 else null,
+                        d3 = state.mm % 10,
                         d4 = state.ss / 10,
                         d5 = state.ss % 10,
                         colonOn = colon

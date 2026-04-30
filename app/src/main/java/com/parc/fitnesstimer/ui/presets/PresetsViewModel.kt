@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.parc.fitnesstimer.data.model.Preset
 import com.parc.fitnesstimer.data.repository.TimerRepository
+import com.parc.fitnesstimer.domain.ConnectionState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,10 +28,18 @@ class PresetsViewModel @Inject constructor(
     val uiState: StateFlow<PresetsUiState> = _ui.asStateFlow()
 
     init {
-        // Collect preset list updates from the repository
         viewModelScope.launch {
             repository.presets.collect { list ->
                 _ui.update { it.copy(presets = list, isLoading = false) }
+            }
+        }
+        // Drop the loading spinner if we lose the socket so the screen doesn't
+        // hang forever waiting for a presets list that will never arrive.
+        viewModelScope.launch {
+            repository.connectionState.collect { state ->
+                if (state == ConnectionState.DISCONNECTED) {
+                    _ui.update { it.copy(isLoading = false) }
+                }
             }
         }
         // Request the list from the device immediately
@@ -38,6 +47,7 @@ class PresetsViewModel @Inject constructor(
     }
 
     fun refresh() {
+        if (repository.connectionState.value != ConnectionState.CONNECTED) return
         _ui.update { it.copy(isLoading = true) }
         repository.sendPresetsGet()
     }
@@ -54,8 +64,7 @@ class PresetsViewModel @Inject constructor(
         val slot = _ui.value.confirmDeleteSlot ?: return
         _ui.update { it.copy(confirmDeleteSlot = null) }
         repository.sendPresetDel(slot)
-        // Refresh list after delete
-        repository.sendPresetsGet()
+        refresh()
     }
 
     fun onDeleteDismissed() {
